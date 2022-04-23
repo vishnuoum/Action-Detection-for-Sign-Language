@@ -5,12 +5,25 @@ from matplotlib import pyplot as plt
 import time
 import mediapipe as mp
 from tensorflow import keras
+import pyttsx3
+import threading
+
+toSpeak=""
+
+# initialize text to speech engine
+engine = pyttsx3.init()
+
+# function to convert text to speech
+def speak(param):
+    engine.say(param)
+    engine.runAndWait()
+
 
 mp_holistic = mp.solutions.holistic # Holistic model
 mp_drawing = mp.solutions.drawing_utils # Drawing utilities
 
 # Actions that we try to detect
-actions = np.array(['hello', 'thanks', 'iloveyou'])
+actions = np.array(['hello', 'thanks', 'love you'])
 
 # 1. New detection variables
 sequence = []
@@ -71,6 +84,8 @@ cap = cv2.VideoCapture(0)
 with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
     while cap.isOpened():
 
+        flag=False
+
         # Read feed
         ret, frame = cap.read()
 
@@ -91,6 +106,9 @@ with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=
         if len(sequence) == 30:
             res = model.predict(np.expand_dims(sequence, axis=0))[0]
             print(actions[np.argmax(res)])
+            if(toSpeak!=actions[np.argmax(res)]):
+                flag=True
+                toSpeak=actions[np.argmax(res)]
             
             
         #3. Viz logic
@@ -113,6 +131,16 @@ with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=
         
         # Show to screen
         cv2.imshow('OpenCV Feed', image)
+
+        try:
+            # alert users about traffic sign
+            if(len(toSpeak)!=0 and flag):
+                # print(type(words))
+                th = threading.Thread(target=speak, args=(toSpeak,))
+                th.start()
+                # th.join()
+        except Exception as e:
+            print(e)
 
         # Break gracefully
         if cv2.waitKey(10) & 0xFF == ord('q'):
