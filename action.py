@@ -10,6 +10,7 @@ import threading
 
 toSpeak=""
 
+
 # initialize text to speech engine
 engine = pyttsx3.init()
 
